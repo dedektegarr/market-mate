@@ -1,10 +1,14 @@
 import { Router } from "express";
+import accountController from "../controllers/accountController.mjs";
 
 const accountRouter = Router();
 
-accountRouter.post("/signup", (req, res) => {
-  res.send(req.body);
-});
+// Registering User
+accountRouter.post(
+  "/signup",
+  accountController.validateSignup,
+  accountController.signup
+);
 
 accountRouter.post("/signin", (req, res) => {
   res.send(req.body);
