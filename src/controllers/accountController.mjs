@@ -1,8 +1,6 @@
-import { body, checkSchema, validationResult } from "express-validator";
+import { body, validationResult } from "express-validator";
 import Account from "../models/account.mjs";
 import { hashPassword } from "../utils/bcrypt-password.mjs";
-import { accountValidationSchema } from "../validations/accountValidation.mjs";
-import { transformErrors } from "../validations/utils.mjs";
 
 const accountController = {
   validateSignup: [
