@@ -1,6 +1,6 @@
-import passport from "passport";
 import { Strategy, ExtractJwt } from "passport-jwt";
-import Account from '../../models/Account.mjs'
+import User from '../../models/Users.mjs'
+import Account from "../../models/Account.mjs";
 
 const options = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -9,11 +9,13 @@ const options = {
 
 const strategy = new Strategy(options, async (jwt_payload, done) => {
     try {
-        const findAccount = await Account.findOne({id: jwt_payload.sub});
-
-        if(!findAccount) throw new Error('Invalid credentials');
+        const account = await Account.findOne({_id: jwt_payload.id});
+        if(!account) throw new Error('Invalid credentials');
         
-        return done(null, findAccount);
+        const user = await User.findOne({accountId: account._id})
+        if(!user) throw new Error('User not found')
+
+        return done(null, user);
     } catch (error) {
         return done(error, null)
     }

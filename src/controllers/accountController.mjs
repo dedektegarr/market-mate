@@ -66,7 +66,7 @@ const accountController = {
       // Save user account to User collection
       const newUser = {
         name: body.name,
-        account: account,
+        accountId: savedAccount._id,
       };
 
       const savedUser = new User(newUser);
