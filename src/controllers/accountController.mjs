@@ -85,12 +85,16 @@ const accountController = {
       const accountExists = await Account.findOne({ email: email });
 
       if (accountExists) {
-        const passwordIsCorret = await checkPassword(password, accountExists.password);
+        const passwordIsCorret = await checkPassword(
+          password,
+          accountExists.password
+        );
         if (passwordIsCorret) {
           const token = jwt.sign(
             { id: accountExists._id },
-            process.env.secretKey
+            process.env.JWT_SECRET
           );
+
           return res.status(200).send({ token: token });
         }
       }
@@ -99,6 +103,10 @@ const accountController = {
     } catch (error) {
       console.log(error);
     }
+  },
+
+  user: async (req, res) => {
+    res.send(req.user);
   },
 };
 

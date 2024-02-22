@@ -1,5 +1,6 @@
 import { Router } from "express";
 import accountController from "../controllers/accountController.mjs";
+import requireAuth from "../middleware/auth.mjs";
 
 const accountRouter = Router();
 
@@ -10,6 +11,7 @@ accountRouter.post(
   accountController.signup
 );
 
-accountRouter.post("/signin", accountController.signin)
+accountRouter.post("/signin", accountController.signin);
+accountRouter.get("/user", requireAuth, accountController.user);
 
 export default accountRouter;
