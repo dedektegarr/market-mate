@@ -1,6 +1,7 @@
 import { body, validationResult } from "express-validator";
 import Account from "../models/account.mjs";
 import { hashPassword } from "../utils/bcrypt-password.mjs";
+import User from "../models/Users.mjs";
 
 const accountController = {
   validateSignup: [
@@ -48,18 +49,27 @@ const accountController = {
         throw new Error("Failed to has the password");
       }
 
-      const newUser = {
-        name: body.name,
+      // Create account
+      const newAccount = {
         email: body.email,
         password: hashedPassword,
       };
 
-      const user = new Account(newUser);
-      const savedUser = await user.save();
+      const account = new Account(newAccount);
+      const savedAccount = await account.save();
 
-      if (!savedUser) {
+      if (!savedAccount) {
         throw new Error("Failed to create an account");
       }
+
+      // Save user account to User collection
+      const newUser = {
+        name: body.name,
+        account: account
+      }
+
+      const savedUser = new User(newUser);
+      await savedUser.save()
 
       return res.status(200).send(savedUser);
     } catch (error) {
