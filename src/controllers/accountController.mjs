@@ -3,6 +3,8 @@ import Account from "../models/Account.mjs";
 import { checkPassword, hashPassword } from "../utils/bcrypt-password.mjs";
 import User from "../models/Users.mjs";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import { errorArrayToObject } from "../utils/validation-error.mjs";
 
 const accountController = {
   validateSignup: [
@@ -36,44 +38,60 @@ const accountController = {
   signup: async (req, res) => {
     const { body } = req;
 
+    const session = mongoose.startSession();
+    (await session).startTransaction();
+
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res
-          .status(400)
-          .send({ errors: errors.array({ onlyFirstError: true }) });
+        return res.status(400).send({
+          status: "error",
+          code: 400,
+          message: "Validation Failed",
+          errors: errorArrayToObject(errors.array({ onlyFirstError: true })),
+        });
       }
 
+      // Hash password
       const hashedPassword = await hashPassword(body.password);
 
       if (!hashedPassword) {
         throw new Error("Failed to has the password");
       }
 
-      // Create account
-      const newAccount = {
+      // Create user account
+      const account = new Account({
         email: body.email,
         password: hashedPassword,
-      };
+      });
 
-      const account = new Account(newAccount);
       const savedAccount = await account.save();
 
-      if (!savedAccount) {
+      // Insert user data to users collection
+      const user = new User({
+        name: body.name,
+        accountId: savedAccount._id,
+      });
+
+      const savedUser = await user.save();
+
+      if (!savedAccount || !savedUser) {
         throw new Error("Failed to create an account");
       }
 
-      // Save user account to User collection
-      const newUser = {
-        name: body.name,
-        accountId: savedAccount._id,
-      };
+      (await session).commitTransaction();
+      (await session).endSession();
 
-      const savedUser = new User(newUser);
-      await savedUser.save();
-
-      return res.status(200).send(savedUser);
+      return res.status(200).send({
+        status: "success",
+        code: 200,
+        message: "Registration successfull",
+        data: { user: savedUser },
+      });
     } catch (error) {
+      await session.abortTransaction();
+      await session.endSession();
+
       return res.status(500).send({ message: error.message });
     }
   },
@@ -95,18 +113,30 @@ const accountController = {
             process.env.JWT_SECRET
           );
 
-          return res.status(200).send({ token: token });
+          return res.status(200).send({
+            status: "success",
+            code: 200,
+            message: "Login Successfull",
+            data: { token },
+          });
         }
       }
 
-      return res.status(401).send({ message: "Invalid Credentials" });
+      throw new Error("Invalid Credentials");
     } catch (error) {
-      console.log(error);
+      return res
+        .status(401)
+        .send({ status: "error", code: 401, message: error.message });
     }
   },
 
   user: async (req, res) => {
-    res.send(req.user);
+    res.status(200).send({
+      status: "success",
+      code: 200,
+      message: "Current user retrieved successfull",
+      data: { user: req.user },
+    });
   },
 };
 

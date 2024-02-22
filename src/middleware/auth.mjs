@@ -1,13 +1,15 @@
-import passport from "passport"
+import passport from "passport";
 
-const requireAuth = (req,res,next) => {
-    passport.authenticate('jwt',{session: false}, (err, user, info)=> {
-        if(err) return next(err)
-        if(!user) return res.status(401).send({message: 'Unauthorized'})
+const requireAuth = (req, res, next) => {
+  passport.authenticate("jwt", { session: false }, (err, user, info) => {
+    if (!user || err)
+      return res
+        .status(401)
+        .send({ status: "unauthorized", code: 401, message: "Unauthorized" });
+    req.user = user;
 
-        req.user = user;
-        return next();
-    })(req,res,next)
-}
+    next();
+  })(req, res, next);
+};
 
 export default requireAuth;

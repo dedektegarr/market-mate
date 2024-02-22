@@ -16,7 +16,6 @@ const strategy = new Strategy(options, async (jwt_payload, done) => {
     if (!account) throw new Error("Invalid credentials");
 
     const user = await User.findOne({ accountId: account._id });
-    if (!user) throw new Error("User not found");
 
     return done(null, user);
   } catch (error) {
