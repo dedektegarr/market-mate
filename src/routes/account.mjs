@@ -10,8 +10,6 @@ accountRouter.post(
   accountController.signup
 );
 
-accountRouter.post("/signin", (req, res) => {
-  res.send(req.body);
-});
+accountRouter.post("/signin", accountController.signin)
 
 export default accountRouter;

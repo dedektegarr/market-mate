@@ -1,7 +1,8 @@
 import { body, validationResult } from "express-validator";
-import Account from "../models/account.mjs";
-import { hashPassword } from "../utils/bcrypt-password.mjs";
+import Account from "../models/Account.mjs";
+import { checkPassword, hashPassword } from "../utils/bcrypt-password.mjs";
 import User from "../models/Users.mjs";
+import jwt from "jsonwebtoken";
 
 const accountController = {
   validateSignup: [
@@ -65,15 +66,38 @@ const accountController = {
       // Save user account to User collection
       const newUser = {
         name: body.name,
-        account: account
-      }
+        account: account,
+      };
 
       const savedUser = new User(newUser);
-      await savedUser.save()
+      await savedUser.save();
 
       return res.status(200).send(savedUser);
     } catch (error) {
       return res.status(500).send({ message: error.message });
+    }
+  },
+
+  signin: async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+      const accountExists = await Account.findOne({ email: email });
+
+      if (accountExists) {
+        const passwordIsCorret = await checkPassword(password, accountExists.password);
+        if (passwordIsCorret) {
+          const token = jwt.sign(
+            { id: accountExists._id },
+            process.env.secretKey
+          );
+          return res.status(200).send({ token: token });
+        }
+      }
+
+      return res.status(401).send({ message: "Invalid Credentials" });
+    } catch (error) {
+      console.log(error);
     }
   },
 };
